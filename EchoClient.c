@@ -41,34 +41,10 @@ int main(){
 		return -1;
 	}
 
-	while(1){
-		if((n = read(0, rcvBuffer, sizeof(rcvBuffer))) >0) {
-
-			rcvBuffer[n] = '\0'; //문자열 뒷부분 깨짐 방지
-			if(!strcmp(rcvBuffer, "quit\n")) break;
-
-			printf("received data: %s\n", rcvBuffer); //서버에서 받은 메세지 출력
-			if((n = write(c_socket, rcvBuffer, strlen(rcvBuffer))) < 0) {
-				return -1;
-		}
-
-		left = n;
-		recv = 0;
-
-			while(left > 0){
-				if((n=read(c_socket, &rcvBuffer[recv], left)) <0){
-					return -1;
-				}
-
-				left = left - n;
-				recv = recv + n;
-			}
-		
-			rcvBuffer[recv] = '\0';
-			printf("echoed data: %s\n", rcvBuffer);
-		}
-	}
+	rcvBuffer[n] = '\0'; //문자열 뒷부분 깨짐 방지
+	printf("received data: %s\n", rcvBuffer); //서버에서 받은 메세지 출력
+	printf("rcvBuffer length: %d\n", n); //3-2. 서버에섭 다은 메세지의 길이 출력 
 	close(c_socket);
-	return 0;	
+	return 0;
 }
 

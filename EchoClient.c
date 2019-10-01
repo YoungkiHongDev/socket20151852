@@ -33,7 +33,10 @@ int main(){
 		//4. 서버에 메시지 보내기
 		fgets(sendBuffer, sizeof(sendBuffer), stdin); //스탠다드인 키보드로부터 메시지 입력
 		write(c_socket, sendBuffer, strlen(sendBuffer)); //서버로 메시지 전송
-		//4. 서버에서 보낸 메시지 읽기 
+		//입력받은 메세지가 quit 이면 break
+		if(strncasecmp(sendBuffer, "quit", 4) == 0)
+			break;
+		//5. 서버에서 보낸 메시지 읽기 
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer)); 
 		//서버에서 보내준 메세지를 rcvBuffer에 저장하고, 메세지의 길이를 리턴
 		//만약 read에 실패하면, -1을 리턴

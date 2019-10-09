@@ -7,9 +7,9 @@
 #define BUFSIZE 100
 char Buffer[100] = "Hi, I'm Server";
 char rcvBuffer[100];
+char macroBuffer1[100] = " 만나서 반가워요";
 
 int main(){
-	char rcvBuffer[BUFSIZE];
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int len;
@@ -52,7 +52,9 @@ int main(){
 			printf("rcvBuffer: %s\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			write(c_socket, rcvBuffer, n); //클라이언트에게 buffer의 내용을 전송함
+			if(strncasecmp(rcvBuffer, "안녕하세요", 10) == 0) //클라이언트가 "안녕하세요" 라고 치면
+				strcat(rcvBuffer, macroBuffer1); //"안녕하세요" 뒤에 " 만나서 반가워요" 붙이기
+			write(c_socket, rcvBuffer, strlen(rcvBuffer)); //클라이언트에게 buffer의 내용을 전송함
 		}
 		close(c_socket);
 		if(strncasecmp(rcvBuffer, "kill server", 11) == 0)

@@ -34,7 +34,7 @@ int main(){
 		fgets(sendBuffer, sizeof(sendBuffer), stdin); //스탠다드인 키보드로부터 메시지 입력
 		write(c_socket, sendBuffer, strlen(sendBuffer)); //서버로 메시지 전송
 		//입력받은 메세지가 quit 이면 break
-		if(strncasecmp(sendBuffer, "quit", 4) == 0)
+		if(strncasecmp(sendBuffer, "quit", 4) == 0 || strncasecmp(sendBuffer, "kill server", 11) == 0)
 			break;
 		//5. 서버에서 보낸 메시지 읽기 
 		n = read(c_socket, rcvBuffer, sizeof(rcvBuffer)); 
@@ -46,7 +46,7 @@ int main(){
 		}
 		rcvBuffer[n] = '\0'; //문자열 뒷부분 깨짐 방지
 		printf("received data: %s\n", rcvBuffer); //서버에서 받은 메세지 출력
-		printf("rcvBuffer length: %d\n", n); //3-2. 서버에섭 다은 메세지의 길이 출력 
+		printf("rcvBuffer length: %d\n", n); //3-2. 서버에서 받은 메세지의 길이 출력 
 	}
 	close(c_socket);
 	return 0;

@@ -8,6 +8,8 @@
 char Buffer[100] = "Hi, I'm Server";
 char rcvBuffer[100];
 char macroBuffer1[100] = " 만나서 반가워요";
+char macroBuffer2[100] = "내 이름은 홍영기야";
+char macroBuffer3[100] = "나는 24살이야";
 
 int main(){
 	int c_socket, s_socket;
@@ -54,6 +56,10 @@ int main(){
 				break;
 			if(strncasecmp(rcvBuffer, "안녕하세요", 10) == 0) //클라이언트가 "안녕하세요" 라고 치면
 				strcat(rcvBuffer, macroBuffer1); //"안녕하세요" 뒤에 " 만나서 반가워요" 붙이기
+			if(strncasecmp(rcvBuffer, "이름이 머야?", 12) == 0)
+				strcpy(rcvBuffer, macroBuffer2);
+			if(strncasecmp(rcvBuffer, "몇 살이야?", 10) == 0)
+				strcpy(rcvBuffer, macroBuffer3);
 			write(c_socket, rcvBuffer, strlen(rcvBuffer)); //클라이언트에게 buffer의 내용을 전송함
 		}
 		close(c_socket);

@@ -7,7 +7,7 @@
 #define BUFSIZE 100
 char Buffer[100] = "Hi, I'm Server";
 char rcvBuffer[100];
-char macroBuffer1[100] = " 만나서 반가워요";
+char macroBuffer1[100] = "안녕하세요 만나서 반가워요";
 char macroBuffer2[100] = "내 이름은 홍영기야";
 char macroBuffer3[100] = "나는 24살이야";
 
@@ -54,18 +54,24 @@ int main(){
 			printf("rcvBuffer: %s\n", rcvBuffer);
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
-			if(strncasecmp(rcvBuffer, "안녕하세요", 10) == 0) //클라이언트가 "안녕하세요" 라고 치면
-				strcat(rcvBuffer, macroBuffer1); //"안녕하세요" 뒤에 " 만나서 반가워요" 붙이기
-			if(strncasecmp(rcvBuffer, "이름이 머야?", 12) == 0)
-				strcpy(rcvBuffer, macroBuffer2);
-			if(strncasecmp(rcvBuffer, "몇 살이야?", 10) == 0)
-				strcpy(rcvBuffer, macroBuffer3);
+
+			if(strncasecmp(rcvBuffer, "안녕하세요", 10) == 0) //클라이언트가 "안녕하세요" 라고 메세지를 전송할 경우
+				memcpy(rcvBuffer, macroBuffer1, sizeof(macroBuffer1) - 1); //rcvBuffer에 "안녕하세요 만나서 반가워요" 복사
+			 	//(수정)strcat => "만나서 반가워요"가 클라이언트한테 계속 전송되는 오류가 나서 memcpy로 수정
+
+			if(strncasecmp(rcvBuffer, "이름이 머야?", 12) == 0) //클라이언트가 "이름이 머야?" 라고 메세지를 전송할 경우
+				memcpy(rcvBuffer, macroBuffer2, sizeof(macroBuffer2) - 1); //rcvBuffer에 "내 이름은 홍영기야" 복사
+
+			if(strncasecmp(rcvBuffer, "몇 살이야?", 10) == 0) //클라이언트가 "몇 살이야?" 라고 메세지를 전송할 경우
+				memcpy(rcvBuffer, macroBuffer3, sizeof(macroBuffer3) - 1); //rcvBuffer에 "나는 24살이야" 복사
+
 			write(c_socket, rcvBuffer, strlen(rcvBuffer)); //클라이언트에게 buffer의 내용을 전송함
+			memset(rcvBuffer, '\0', 100); //쓰레기값을 처리하기 위해 memset 사용, 배열의 모든 자리를 널값으로 초기화
 		}
 		close(c_socket);
 		if(strncasecmp(rcvBuffer, "kill server", 11) == 0)
 			break;
 	}
 	close(s_socket);
-	return 0;	
+	return 0;
 }

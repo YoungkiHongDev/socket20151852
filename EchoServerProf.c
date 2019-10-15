@@ -62,7 +62,9 @@ int main(){
 		while(1){
 			n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
 			printf("rcvBuffer: %s\n", rcvBuffer);
-
+			/*[1015수업]
+			rcvBuffer[n-1] = '\0'; //개행 문자 삭제
+			*/
 			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
 				break;
 			/*[1015수업]
@@ -72,6 +74,28 @@ int main(){
 				strcpy(buffer, "내 이름은 홍영기야.");
 			else if(strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
 				strcpy(buffer, "나는 24살이야.");
+			else if(strncasecmp(rcvBuffer, "strlen ", strlen("strlen ")))
+				sprintf(buffer, "문자열의 길이는 %d입니다", strlen(rcvBuffer)-7); //-7은 공백까지 빼기
+			else if(strncasecmp(rcvBuffer, "strcmp ", strcmp("strcmp ")){
+				char *token;
+				char *str[3];
+				int idx = 0;
+
+				token = strtok(rcvbuffer, " "); //공백으로 자름
+				while(token != NULL){ //널값이 될때까지 돌림
+					str[idx] = token; //포인터배열에 토큰을 저장
+					printf("str[%d] = %s\n", idx, str[idx]); //출력
+					idx++; //인덱스 증가
+					token = strtok(NULL, " "); //다음토큰을 변수에 저장
+				}
+				if(idx < 3)
+					strcpy(buffer, "문자열 비교를 위래서는 두 문자열이 필요합니다.");
+				else if(!strcmp(str[1], str[2])) //같은 문자열이면
+					sprintf(buffer, "%s와 %s는 같은 문자열입니다", str[1], str[2]);
+				else
+					sprintf(buffer, "%s와 %s는 다른 문자열입니다", str[1], str[2]);
+			}
+
 			else
 				strcpy(buffer, "무슨 말인지 모르겠습니다.");
 			*/

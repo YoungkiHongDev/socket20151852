@@ -6,22 +6,16 @@
 #define PORT 10000
 #define BUFSIZE 100
 
-char Buffer[BUFSIZE] = "Hi, I'm Server";
+char buffer[BUFSIZE] = "Hi, I'm Server";
+//sizeof(buffer) => 100 (배열의 크기)
+//strlen(buffer) => 15 (buffer에 저장된 문자열의 길이)
 char rcvBuffer[BUFSIZE];
-char macroBuffer1[BUFSIZE] = "안녕하세요 만나서 반가워요";
-char macroBuffer2[BUFSIZE] = "내 이름은 홍영기야";
-char macroBuffer3[BUFSIZE] = "나는 24살이야";
-char tempBuffer[BUFSIZE];
-char cmpBuffer[BUFSIZE];
-char *ptr;
 
 int main(){
 	int c_socket, s_socket;
 	struct sockaddr_in s_addr, c_addr;
 	int len;
 	int n;
-	int slen;
-	int scmp;
 
 	// 1. 서버 소켓 생성
 	//서버 소켓 = 클라이언트의 접속 요청을 처리(허용)해 주기 위한 소켓
@@ -53,49 +47,91 @@ int main(){
 		printf("클라이언트 접속을 기다리는 중....\n");
 		c_socket = accept(s_socket, (struct sockaddr *)&c_addr, &len); 
 		//클라이언트의 요청이 오면 허용(accept)해 주고, 해당 클라이언트와 통신할 수 있도록 클라이언트 소켓(c_socket)을 반환함.
-
 		printf("Client is connected\n");
 		printf("클라이언트 접속 허용\n");
 		while(1){
-			n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
-			printf("rcvBuffer: %s\n", rcvBuffer);
+				n = read(c_socket, rcvBuffer, sizeof(rcvBuffer));
+				printf("rcvBuffer: %s\n", rcvBuffer);
+				rcvBuffer[n-1] = '\0'; //개행 문자 삭제
 
-			if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
-				break;
+				if(strncasecmp(rcvBuffer, "quit", 4) == 0 || strncasecmp(rcvBuffer, "kill server", 11) == 0)
+						break;
+				else if(!strncasecmp(rcvBuffer, "안녕하세요", strlen("안녕하세요")))
+						strcpy(buffer, "안녕하세요. 만나서 반가워요.");
+				else if(!strncasecmp(rcvBuffer, "이름이 머야?", strlen("이름이 머야?")))
+						strcpy(buffer, "내 이름은 홍영기야.");
+				else if(!strncasecmp(rcvBuffer, "몇 살이야?", strlen("몇 살이야?")))
+						strcpy(buffer, "나는 24살이야.");
+				else if(!strncasecmp(rcvBuffer, "strlen ", strlen("strlen ")))
+						sprintf(buffer, "문자열의 길이는 %d입니다.", strlen(rcvBuffer)-7); //-7은 공백까지 빼기
+				else if(!strncasecmp(rcvBuffer, "strcmp ", strlen("strcmp "))){
+						char *token;
+						char *str[3];
+						int idx = 0;
+						token = strtok(rcvBuffer, " "); //공백을 기준으로 잘라 토큰으로 만들기
+						while(token != NULL){ //널값이 될때까지 돌림
+								str[idx] = token; //포인터배열에 토큰을 저장
+								printf("str[%d] = %s\n", idx, str[idx]); //출력
+								idx++; //인덱스 증가
+								token = strtok(NULL, " "); //다음토큰을 변수에 저장
+						}
+						if(idx < 3)
+								strcpy(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다."); //문자열이 하나만 들어올 경우
+						else if(!strcmp(str[1], str[2])) //같은 문자열이면
+								sprintf(buffer, "%s와 %s는 같은 문자열입니다", str[1], str[2]);
+						else
+								sprintf(buffer, "%s와 %s는 다른 문자열입니다", str[1], str[2]);
+				}
+				else if(!strncasecmp(rcvBuffer, "readfile ", strlen("readfile "))){
+						char *token;
+						char *str[2];
+						int idx = 0;
+						FILE *fp;
+						token = strtok(rcvBuffer, " ");
+						while(token != NULL){
+								str[idx] = token;
+								printf("str[%d] = %s\n", idx, str[idx]);
+								idx++;
+								token = strtok(NULL, " ");
+						}
+						if(idx < 1)
+								strcpy(buffer, "읽을 파일의 이름이 필요합니다.");
+						else {
+								fp = fopen(str[1], "r");
+								if(fp){
+										while(fgets(buffer, BUFSIZE, fp)){
+												write(c_socket, buffer, strlen(buffer));
+										}
+										continue;
+								}
+						}
+				}
+				else if(!strncasecmp(rcvBuffer, "exec ", strlen("exec "))){
+						char *token;
+						char *command;
+						int i;
+						token = strtok(rcvBuffer, " ");
+						command = strtok(NULL, "\0"); //exec 뒤에 오는 모든 문자열 저장
+						printf("command : %s\n", command);
+						i = system(command);
+						if(i == 0)
+								sprintf(buffer, "[%s] command is executed\n", command);
+						else if(i != 0)
+								sprintf(buffer, "[%s] command is failed\n", command);
+										
+				}		
+				else
+						strcpy(buffer, "무슨 말인지 모르겠습니다.");
 
-			if(strncasecmp(rcvBuffer, "안녕하세요", 10) == 0) //5-1 클라이언트가 "안녕하세요" 라고 메세지를 전송할 경우
-				memcpy(rcvBuffer, macroBuffer1, sizeof(macroBuffer1)); //rcvBuffer에 "안녕하세요 만나서 반가워요" 복사
 
-			if(strncasecmp(rcvBuffer, "이름이 머야?", 12) == 0) //5-2 클라이언트가 "이름이 머야?" 라고 메세지를 전송할 경우
-				memcpy(rcvBuffer, macroBuffer2, sizeof(macroBuffer2)); //rcvBuffer에 "내 이름은 홍영기야" 복사
-
-			if(strncasecmp(rcvBuffer, "몇 살이야?", 10) == 0) //5-2 클라이언트가 "몇 살이야?" 라고 메세지를 전송할 경우
-				memcpy(rcvBuffer, macroBuffer3, sizeof(macroBuffer3)); //rcvBuffer에 "나는 24살이야" 복사
-
-			if(strncasecmp(rcvBuffer, "strlen", 6) == 0){ //5-3 클라이언트가 "strlen <문자열>"라고 메세지를 전송할 경우
-				ptr = strtok(rcvBuffer, " "); //strtok로 전송받은 문자열을 자르기
-				strcpy(tempBuffer, strtok(NULL, " ")); //char 배열에 <문자열> 복사
-				slen = strlen(tempBuffer) - 1; //문자열의 길이값을 int형 변수에 저장, 메세지를 fgets()로 입력받아서 생긴 개행문자 '\n'값 - 1
-				sprintf(rcvBuffer, "%d", slen); //sprintf로 int형 문자열의 길이값을 문자열로 변환하여 rcvBuffer에 저장
-			}
-
-			if(strncasecmp(rcvBuffer, "strcmp", 6) == 0){ //5-3 클라이언트가 "strcmp <문자열1> <문자열2>"라고 메세지를 전송할 경우
-				ptr = strtok(rcvBuffer, " "); //strtok로 전송받은 문자열을 자르기
-				strcpy(tempBuffer, strtok(NULL, " ")); //char 배열에 <문자열1> 복사
-				strcpy(cmpBuffer, strtok(NULL, " ")); //char 배열에 <문자열2> 복사
-				ptr = strchr(cmpBuffer, '\n'); //메세지를 fgets()로 입력받아서 생긴 개행문자 '\n'검색
-				*ptr = '\0'; //개행문자 '\n' => '\0'null로 덮어쓰기
-				scmp = strcmp(tempBuffer, cmpBuffer); //문자열의 비교값을 int형 변수에 저장
-				sprintf(rcvBuffer, "%d", scmp); //sprintf로 int형 문자열의 비교값을 문자열로 변환하여 rcvBuffer에 저장
-			}
-
-			write(c_socket, rcvBuffer, strlen(rcvBuffer)); //클라이언트에게 buffer의 내용을 전송함
-			memset(rcvBuffer, '\0', 100); //문자열 복사 후 남은 쓰레기값의 처리를 위한 memset, 배열의 모든 자리를 널값으로 초기화
+			
+				write(c_socket, buffer, strlen(buffer));
 		}
 		close(c_socket);
 		if(strncasecmp(rcvBuffer, "kill server", 11) == 0)
-			break;
+				break;
 	}
 	close(s_socket);
 	return 0;
 }
+

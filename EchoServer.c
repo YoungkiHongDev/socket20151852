@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define PORT 10000
-#define BUFSIZE 100
+#define BUFSIZE 10000
 
 char buffer[BUFSIZE] = "Hi, I'm Server";
 //sizeof(buffer) => 100 (배열의 크기)
@@ -69,12 +69,14 @@ int main(){
 						char *str[3];
 						int idx = 0;
 						token = strtok(rcvBuffer, " "); //공백을 기준으로 잘라 토큰으로 만들기
+
 						while(token != NULL){ //널값이 될때까지 돌림
 								str[idx] = token; //포인터배열에 토큰을 저장
 								printf("str[%d] = %s\n", idx, str[idx]); //출력
 								idx++; //인덱스 증가
 								token = strtok(NULL, " "); //다음토큰을 변수에 저장
 						}
+
 						if(idx < 3)
 								strcpy(buffer, "문자열 비교를 위해서는 두 문자열이 필요합니다."); //문자열이 하나만 들어올 경우
 						else if(!strcmp(str[1], str[2])) //같은 문자열이면
@@ -82,43 +84,49 @@ int main(){
 						else
 								sprintf(buffer, "%s와 %s는 다른 문자열입니다", str[1], str[2]);
 				}
-				else if(!strncasecmp(rcvBuffer, "readfile ", strlen("readfile "))){
+				else if(!strncmp(rcvBuffer, "readfile ", 9)){
 						char *token;
-						char *str[2];
-						int idx = 0;
-						FILE *fp;
-						token = strtok(rcvBuffer, " ");
+						char *str[10];
+						int cnt = 0;
+						token = strtok(rcvBuffer, " "); //token = readfile
+
 						while(token != NULL){
-								str[idx] = token;
-								printf("str[%d] = %s\n", idx, str[idx]);
-								idx++;
-								token = strtok(NULL, " ");
+								str[cnt] = token;
+								cnt++;
+								token = strtok(NULL, " "); //token = 파일명
 						}
-						if(idx < 1)
-								strcpy(buffer, "읽을 파일의 이름이 필요합니다.");
-						else {
-								fp = fopen(str[1], "r");
-								if(fp){
-										while(fgets(buffer, BUFSIZE, fp)){
-												write(c_socket, buffer, strlen(buffer));
+
+						if(cnt < 2) {
+								strcpy(buffer, "파일명을 입력해주세요.");
+						} else {
+								FILE *fp = fopen(str[1], "r");
+
+								if(fp){ //정상적으로 파일이 오픈되면
+										char tempStr[BUFSIZE]; //파일 내용을 저장할 변수
+
+										while(fgets(tempStr, BUFSIZE, (FILE *)fp)){
+												strcat(buffer, tempStr); //여러 줄의 내용을 하나의 buffer에 저장하기 위해 strcat() 함수 사용
 										}
-										continue;
+
+								} else { //해당 파일이 없으면
+										strcpy(buffer, "해당 파일은 존재하지 않습니다.");
 								}
+
+						  fclose(fp);
 						}
 				}
-				else if(!strncasecmp(rcvBuffer, "exec ", strlen("exec "))){
+				else if(!strncmp(rcvBuffer, "exec ", 5)){
 						char *token;
 						char *command;
-						int i;
-						token = strtok(rcvBuffer, " ");
+						token = strtok(rcvBuffer, " ");	//token = exec
 						command = strtok(NULL, "\0"); //exec 뒤에 오는 모든 문자열 저장
 						printf("command : %s\n", command);
-						i = system(command);
-						if(i == 0)
-								sprintf(buffer, "[%s] command is executed\n", command);
-						else if(i != 0)
-								sprintf(buffer, "[%s] command is failed\n", command);
-										
+						int result = system(command); //command가 정상 실행되면 0을 리턴, 그렇지 않으면 에러코드 리턴
+
+						if(result) //성공한 경우
+								sprintf(buffer, "[%s] 명령어가 성공했습니다.\n", command);
+						else
+								sprintf(buffer, "[%s] 명령어가 실했습니다.\n", command);				
 				}		
 				else
 						strcpy(buffer, "무슨 말인지 모르겠습니다.");
@@ -126,6 +134,7 @@ int main(){
 
 			
 				write(c_socket, buffer, strlen(buffer));
+				memset(buffer, 0, BUFSIZE); //buffer 초기화
 		}
 		close(c_socket);
 		if(strncasecmp(rcvBuffer, "kill server", 11) == 0)

@@ -18,7 +18,7 @@ int list_c[MAX_CLIENT];
 char escape[ ] = "exit";
 char greeting[ ] = "Welcome to chatting room\n";
 char CODE200[ ] = "Sorry No More Connection\n";
-int num = -1;
+
 int main(int argc, char *argv[ ])
 {
     int c_socket, s_socket;
@@ -68,9 +68,9 @@ void *do_chat(void *arg)
         memset(chatData, 0, sizeof(chatData));
         if((n = read(c_socket, chatData, sizeof(chatData))) > 0) {
 				//write chatData to all clients
-				for(i=0; i<num; i++){
-					if(list_c[num]!=NULL){
-						write(c_socket, chatData, strlen(chatData));
+				for(i=0; i < MAX_CLIENT; i++){
+					if(list_c[i] != INVALID_SOCK){
+						write(list_c[i], chatData, strlen(chatData));
 					}
 				}
               if(strstr(chatData, escape) != NULL) {
@@ -84,23 +84,35 @@ int pushClient(int c_socket) {
 	//ADD c_socket to list_c array.
     //return -1, if list_c is full.
     //return the index of list_c which c_socket is added.
-	num++;
-	if(num == 10){
-		return -1;
-	} else {
-		list_c[num] = c_socket;
-		return num;
+	int i;
+	for(i=0; i < MAX_CLIENT; i++){
+		pthread_mutex_lock(&mutex);
+
+		if(list_c[i] == INVALID_SOCK){
+			list_c[i] = c_socket;
+			pthread_mutex_unlock(&mutex);
+			return i;
+		}
+		pthread_mutex_unlock(&mutex);
 	}
 
+	if(i == MAX_CLIENT)
+		return -1;
 }
 
 int popClient(int c_socket){
     close(c_socket);
     //REMOVE c_socket from list_c array.
 	int i;
-	for(i=0;i<num;i++){
-		if(list_c[num] == c_socket)
-			list_c[num] = NULL;
+	for(i=0; i < MAX_CLIENT; i++){
+		pthread_mutex_lock(&mutex);
+
+		if(list_c[i] == c_socket){
+			list_c[i] = INVALID_SOCK;
+			pthread_mutex_unlock(&mutex);
+			return 0;
+		}
+		pthread_mutex_unlock(&mutex);
 	}
 }
 

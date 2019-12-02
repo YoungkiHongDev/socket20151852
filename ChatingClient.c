@@ -35,7 +35,8 @@ int main(int argc, char *argv[ ])
     if(connect(c_socket, (struct sockaddr *) &c_addr, sizeof(c_addr)) == -1) {
         printf("Can not connect\n");
         return -1;
-    }
+         }
+	write(c_socket, nickname, strlen(nickname));
     //pthread_create with do_send function
 	pthread_create(&thread_1, NULL, do_send_chat, (void *)&c_socket);
     //pthread_create with do_receive_chat function
